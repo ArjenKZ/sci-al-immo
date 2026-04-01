@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCI AL IMMO — Générateur de documents</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #f0f2f5; color: #222; min-height: 100vh; padding: 2rem 1rem; }
+.app { max-width: 760px; margin: 0 auto; }
+.header { display: flex; align-items: center; gap: 14px; background: #2E4A7A; color: white; padding: 1.25rem 1.5rem; border-radius: 10px; margin-bottom: 1.25rem; }
+.logo { width: 48px; height: 48px; border-radius: 8px; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+.header h1 { color: white; font-size: 18px; font-weight: 700; }
+.header p { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+.badge { display: inline-block; background: #4caf50; color: white; font-size: 11px; padding: 2px 8px; border-radius: 20px; margin-left: 8px; }
+.card { background: white; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.card-title { font-size: 12px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 1rem; }
+.info-row { display: flex; gap: 8px; align-items: center; padding: 8px 10px; background: #f7f8fa; border-radius: 6px; margin-bottom: 6px; font-size: 13px; }
+.info-label { color: #888; min-width: 65px; }
+.info-val { color: #222; font-weight: 600; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group label { font-size: 12px; color: #666; font-weight: 600; }
+.form-group input, .form-group select { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; color: #222; outline: none; font-family: Arial; }
+.form-group input:focus, .form-group select:focus { border-color: #2E4A7A; }
+.iban-row { display: flex; gap: 8px; }
+.iban-row input { flex: 1; }
+.save-btn { padding: 8px 16px; background: #2E4A7A; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.save-btn:hover { background: #243d68; }
+.save-status { font-size: 12px; margin-top: 5px; }
+.save-status.ok { color: #2e7d32; }
+.save-status.ko { color: #c62828; }
+.amounts-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 12px; }
+.amount-card { background: #f7f8fa; border-radius: 8px; padding: 12px; text-align: center; }
+.amount-card .lbl { font-size: 11px; color: #888; margin-bottom: 4px; }
+.amount-card .val { font-size: 22px; font-weight: 700; color: #222; }
+.amount-card.ttc .val { color: #2E4A7A; }
+.tab-bar { display: flex; gap: 4px; background: #f0f2f5; border-radius: 8px; padding: 4px; margin-bottom: 1rem; }
+.tab { flex: 1; padding: 8px; text-align: center; font-size: 13px; cursor: pointer; border-radius: 6px; color: #666; border: none; background: transparent; font-family: Arial; font-weight: 600; transition: all 0.15s; }
+.tab.active { background: white; color: #2E4A7A; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.btn { width: 100%; padding: 14px 16px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; font-family: Arial; margin-bottom: 10px; color: white; }
+.btn-avis { background: #1565c0; }
+.btn-avis:hover { background: #0d47a1; }
+.btn-quit { background: #2E4A7A; }
+.btn-quit:hover { background: #243d68; }
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.toast { display: none; padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 1rem; font-weight: 600; }
+.toast.show { display: block; }
+.toast.ok { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+.toast.err { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+.toast.info { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+.preview-doc { background: white; border: 1px solid #ddd; border-radius: 6px; padding: 2rem; font-family: Arial, sans-serif; font-size: 13px; color: #222; line-height: 1.6; }
+.doc-hbar { background: #2E4A7A; color: white; padding: 14px 18px; margin: -2rem -2rem 0; border-radius: 6px 6px 0 0; }
+.doc-hbar .t { font-size: 16px; font-weight: 700; }
+.doc-hbar .s { font-size: 10px; opacity: 0.75; margin-top: 3px; }
+.doc-parties { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 1.2rem 0; }
+.doc-party { padding: 10px 12px; background: #f4f7fb; border-left: 3px solid #2E4A7A; }
+.doc-party .pl { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.doc-party .pn { font-weight: 700; font-size: 13px; color: #2E4A7A; }
+.doc-party .pi { font-size: 11px; color: #555; margin-top: 2px; line-height: 1.5; }
+.doc-subj { text-align: center; margin: 0.8rem 0; padding: 8px; background: #f0f4fa; border-radius: 4px; font-size: 13px; font-weight: 700; color: #2E4A7A; }
+.doc-table { width: 100%; border-collapse: collapse; margin: 0.8rem 0; }
+.doc-table th { background: #2E4A7A; color: white; padding: 8px 10px; text-align: left; font-size: 12px; }
+.doc-table td { padding: 7px 10px; font-size: 12px; border-bottom: 1px solid #edf0f7; }
+.doc-table .tot td { background: #f0f4fa; font-weight: 700; color: #2E4A7A; }
+.doc-pay { margin: 0.8rem 0; padding: 10px 12px; background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 12px; }
+.doc-nv { font-size: 11px; color: #999; font-style: italic; text-align: center; margin: 6px 0; }
+.doc-sig { margin-top: 1.5rem; display: flex; justify-content: flex-end; }
+.sig-b { text-align: center; }
+.sig-b .sl { font-size: 11px; color: #888; }
+.sig-b .ss { height: 40px; border-bottom: 1px solid #bbb; width: 150px; margin: 10px auto 4px; }
+.sig-b .sn { font-weight: 700; font-size: 13px; color: #2E4A7A; }
+.doc-foot { margin-top: 1rem; font-size: 10px; color: #999; border-top: 1px solid #eee; padding-top: 8px; display: flex; justify-content: space-between; }
+.tip { text-align: center; font-size: 12px; color: #999; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="logo">SCI</div>
+    <div>
+      <h1>SCI AL IMMO <span class="badge">✓ Conforme</span></h1>
+      <p>Générateur d'avis d'échéance &amp; quittances de loyer — PDF</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Bailleur</div>
+    <div class="info-row"><span class="info-label">Société</span><span class="info-val">SCI AL IMMO — Gérant : AL ARJEN</span></div>
+    <div class="info-row"><span class="info-label">Siège</span><span class="info-val">22 rue de Brest, 95400 Arnouville</span></div>
+    <div class="info-row"><span class="info-label">SIRET</span><span class="info-val">980 954 416 00015</span></div>
+    <div class="info-row"><span class="info-label">Paiement</span><span class="info-val">Virement bancaire</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">IBAN (sauvegardé automatiquement)</div>
+    <div class="iban-row">
+      <input type="text" id="iban" placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX" oninput="onIbanChange()" />
+      <button class="save-btn" onclick="saveIban()">Sauvegarder</button>
+    </div>
+    <div class="save-status" id="ibanStatus"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Paramètres</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Mois</label>
+        <select id="mois">
+          <option value="1">Janvier</option><option value="2">Février</option><option value="3">Mars</option>
+          <option value="4">Avril</option><option value="5">Mai</option><option value="6">Juin</option>
+          <option value="7">Juillet</option><option value="8">Août</option><option value="9">Septembre</option>
+          <option value="10">Octobre</option><option value="11">Novembre</option><option value="12">Décembre</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Année</label><input type="number" id="annee" value="2025" min="2020" max="2035" /></div>
+      <div class="form-group"><label>Date d'échéance (avis)</label><input type="date" id="dateEcheance" /></div>
+      <div class="form-group"><label>Date de paiement (quittance)</label><input type="date" id="datePaiement" /></div>
+      <div class="form-group"><label>Loyer HT (€)</label><input type="number" id="loyerHT" value="400" min="0" step="1" /></div>
+      <div class="form-group"><label>TVA (%)</label><input type="number" id="tva" value="20" min="0" max="100" step="0.1" /></div>
+    </div>
+    <div class="amounts-grid">
+      <div class="amount-card"><div class="lbl">HT</div><div class="val" id="dispHT">400,00 €</div></div>
+      <div class="amount-card"><div class="lbl" id="lblTVA">TVA 20%</div><div class="val" id="dispTVA">80,00 €</div></div>
+      <div class="amount-card ttc"><div class="lbl">TTC</div><div class="val" id="dispTTC">480,00 €</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="tab-bar">
+      <button class="tab active" onclick="setTab('avis',this)">Avis d'échéance</button>
+      <button class="tab" onclick="setTab('quit',this)">Quittance de loyer</button>
+    </div>
+    <div id="previewDoc"></div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <button class="btn btn-avis" onclick="telecharger('avis')">⬇ Télécharger PDF — Avis d'échéance</button>
+  <button class="btn btn-quit" onclick="telecharger('quit')">⬇ Télécharger PDF — Quittance de loyer</button>
+  <p class="tip">Les PDF sont enregistrés dans votre dossier Téléchargements</p>
+
+</div>
+
+<script>
+var MOIS = ['','Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+var BLEU = [46,74,122];
+var KEY = 'sci_al_immo_iban';
+var currentTab = 'avis';
+
+var SCI = {
+  nom:'SCI AL IMMO', gerant:'AL ARJEN',
+  siege:'22 rue de Brest, 95400 Arnouville',
+  siret:'980 954 416 00015',
+  locataire:'Maison Pure Clean',
+  adresse:'69 avenue du Maréchal Leclerc, 93190 Livry-Gargan'
+};
+
+function fmt(n){ return n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
+
+function loadIban(){ try{ var v=localStorage.getItem(KEY); if(v){ document.getElementById('iban').value=v; setStatus('✓ IBAN chargé','ok'); }} catch(e){} }
+function saveIban(){ var v=document.getElementById('iban').value.trim(); if(!v){ setStatus('Saisir un IBAN.','ko'); return; } try{ localStorage.setItem(KEY,v); setStatus('✓ Sauvegardé !','ok'); renderPreview(); } catch(e){ setStatus('Erreur.','ko'); } }
+function onIbanChange(){ setStatus('Non sauvegardé — cliquez Sauvegarder','ko'); }
+function setStatus(m,t){ var el=document.getElementById('ibanStatus'); el.textContent=m; el.className='save-status '+t; }
+
+function getVals(){
+  var ht=parseFloat(document.getElementById('loyerHT').value)||400;
+  var tvaRate=parseFloat(document.getElementById('tva').value)||20;
+  var tvaAmt=ht*tvaRate/100, ttc=ht+tvaAmt;
+  var mois=parseInt(document.getElementById('mois').value);
+  var annee=document.getElementById('annee').value;
+  var dateE=document.getElementById('dateEcheance').value;
+  var dateP=document.getElementById('datePaiement').value;
+  var iban=document.getElementById('iban').value.trim()||'À compléter';
+  var periode=MOIS[mois]+' '+annee;
+  function fD(d){ return d?new Date(d+'T12:00:00').toLocaleDateString('fr-FR'):'___/___/______'; }
+  return {ht:ht,tvaRate:tvaRate,tvaAmt:tvaAmt,ttc:ttc,mois:mois,annee:annee,periode:periode,dateE:fD(dateE),dateP:fD(dateP),iban:iban};
+}
+
+function updateAmounts(){
+  var v=getVals();
+  document.getElementById('dispHT').textContent=fmt(v.ht);
+  document.getElementById('dispTVA').textContent=fmt(v.tvaAmt);
+  document.getElementById('dispTTC').textContent=fmt(v.ttc);
+  document.getElementById('lblTVA').textContent='TVA '+v.tvaRate+'%';
+  renderPreview();
+}
+
+function setTab(tab,el){
+  currentTab=tab;
+  var tabs=document.querySelectorAll('.tab');
+  for(var i=0;i<tabs.length;i++) tabs[i].classList.remove('active');
+  el.classList.add('active');
+  renderPreview();
+}
+
+function showToast(msg,type){
+  var t=document.getElementById('toast');
+  t.className='toast show '+type; t.textContent=msg;
+  if(type==='ok') setTimeout(function(){ t.className='toast'; },4000);
+}
+
+function telecharger(type){
+  var v=getVals();
+  var fn=type==='avis'
+    ?'Avis_Echeance_'+v.annee+'_'+('0'+v.mois).slice(-2)+'_SCI_AL_IMMO.pdf'
+    :'Quittance_'+v.annee+'_'+('0'+v.mois).slice(-2)+'_SCI_AL_IMMO.pdf';
+  showToast('Génération du PDF...','info');
+  setTimeout(function(){
+    try{
+      var doc=new window.jspdf.jsPDF({unit:'mm',format:'a4'});
+      var W=210,M=18,cw=W-M*2;
+      doc.setFillColor(BLEU[0],BLEU[1],BLEU[2]); doc.rect(0,0,W,32,'F');
+      doc.setTextColor(255,255,255);
+      doc.setFont('helvetica','bold'); doc.setFontSize(14);
+      doc.text(type==='avis'?"AVIS D'ÉCHÉANCE DE LOYER":"QUITTANCE DE LOYER",M,13);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8);
+      doc.text(SCI.nom+' — '+SCI.siege,M,21);
+      doc.text('SIRET : '+SCI.siret,M,27);
+      doc.text(type==='avis'?'Réf. '+v.annee+'-'+('0'+v.mois).slice(-2):'Réf. Q-'+v.annee+'-'+('0'+v.mois).slice(-2),W-M,13,{align:'right'});
+      var y=42; var hw=(cw-6)/2;
+      var parties=[[SCI.nom,[SCI.siege,'Gérant : '+SCI.gerant],'BAILLEUR',M],[SCI.locataire,['69 avenue du Maréchal Leclerc','93190 Livry-Gargan'],'LOCATAIRE',M+hw+6]];
+      for(var i=0;i<parties.length;i++){
+        var p=parties[i]; var n=p[0]; var info=p[1]; var lbl=p[2]; var x=p[3];
+        doc.setFillColor(244,247,251); doc.rect(x,y,hw,28,'F');
+        doc.setDrawColor(BLEU[0],BLEU[1],BLEU[2]); doc.setLineWidth(1); doc.line(x,y,x,y+28);
+        doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(120,120,120); doc.text(lbl,x+3,y+5);
+        doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(BLEU[0],BLEU[1],BLEU[2]); doc.text(n,x+3,y+12);
+        doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(70,70,70);
+        for(var j=0;j<info.length;j++) doc.text(info[j],x+3,y+19+j*5.5);
+      }
+      y+=35;
+      doc.setFillColor(240,244,250); doc.rect(M,y,cw,10,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(BLEU[0],BLEU[1],BLEU[2]);
+      doc.text(type==='avis'?'APPEL DE LOYER — Période : '+v.periode:'QUITTANCE DE LOYER — '+v.periode,W/2,y+7,{align:'center'});
+      y+=17;
+      doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(55,55,55);
+      var body=type==='avis'
+        ?'Nous vous prions de bien vouloir trouver ci-dessous le détail des sommes dues au titre du loyer du mois de '+v.periode+', conformément au bail en vigueur pour le local situé au '+SCI.adresse+'.'
+        :'Je soussigné(e) '+SCI.gerant+', gérant de la '+SCI.nom+' (SIRET : '+SCI.siret+'), déclare avoir reçu de '+SCI.locataire+' la somme de '+fmt(v.ttc)+', en règlement complet et intégral du loyer et des charges du local situé au '+SCI.adresse+', pour la période du mois de '+v.periode+'.';
+      var ls=doc.splitTextToSize(body,cw); doc.text(ls,M,y); y+=ls.length*5.5+7;
+      doc.setFillColor(BLEU[0],BLEU[1],BLEU[2]); doc.rect(M,y,cw,9,'F');
+      doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
+      doc.text('Désignation',M+3,y+6.2); doc.text('Montant',W-M-3,y+6.2,{align:'right'}); y+=9;
+      var rows=[['Loyer — '+v.periode+' (charges comprises)',fmt(v.ht)],['TVA '+v.tvaRate+'%',fmt(v.tvaAmt)]];
+      for(var i=0;i<rows.length;i++){
+        doc.setFillColor(i%2===0?255:249,i%2===0?255:250,i%2===0?255:252); doc.rect(M,y,cw,9,'F');
+        doc.setDrawColor(220,228,239); doc.setLineWidth(0.3); doc.line(M,y+9,M+cw,y+9);
+        doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(50,50,50);
+        doc.text(rows[i][0],M+3,y+6.2); doc.text(rows[i][1],W-M-3,y+6.2,{align:'right'}); y+=9;
+      }
+      doc.setFillColor(235,242,252); doc.rect(M,y,cw,10,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(BLEU[0],BLEU[1],BLEU[2]);
+      doc.text(type==='avis'?'TOTAL À RÉGLER TTC':'TOTAL REÇU TTC',M+3,y+7);
+      doc.text(fmt(v.ttc),W-M-3,y+7,{align:'right'}); y+=17;
+      var ih=type==='avis'?22:13;
+      doc.setFillColor(248,249,250); doc.rect(M,y,cw,ih,'F');
+      doc.setDrawColor(210,210,210); doc.setLineWidth(0.4); doc.rect(M,y,cw,ih);
+      doc.setFontSize(9); doc.setTextColor(55,55,55);
+      if(type==='avis'){
+        doc.setFont('helvetica','bold'); doc.text('Modalités de paiement :',M+3,y+7);
+        doc.setFont('helvetica','normal'); doc.text('Virement bancaire uniquement',M+3,y+13);
+        doc.text('IBAN : '+v.iban,M+3,y+19);
+        doc.setFont('helvetica','bold'); doc.text("Date d'échéance : "+v.dateE,W-M-3,y+13,{align:'right'});
+      } else {
+        doc.setFont('helvetica','bold'); doc.text('Mode de paiement :',M+3,y+8);
+        doc.setFont('helvetica','normal'); doc.text('Virement bancaire',M+44,y+8);
+        doc.setFont('helvetica','bold'); doc.text('Date de réception : '+v.dateP,W-M-3,y+8,{align:'right'});
+      }
+      y+=ih+9;
+      doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(160,160,160);
+      doc.text(type==='avis'?'Ce document ne vaut pas quittance de loyer — Sans valeur de quittance':'Cette quittance est délivrée pour valoir ce que de droit et atteste du paiement intégral des sommes dues.',W/2,y,{align:'center'});
+      y+=13;
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(100,100,100);
+      doc.text('Le Gérant de '+SCI.nom+',',W-M-50,y); y+=16;
+      doc.setDrawColor(180,180,180); doc.setLineWidth(0.5); doc.line(W-M-50,y,W-M,y); y+=5;
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(BLEU[0],BLEU[1],BLEU[2]); doc.text(SCI.gerant,W-M-50,y);
+      doc.setDrawColor(200,200,200); doc.setLineWidth(0.3); doc.line(M,285,W-M,285);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(150,150,150);
+      doc.text(SCI.nom+' — SIRET : '+SCI.siret+' — '+SCI.siege,M,289);
+      doc.text('Émis le '+new Date().toLocaleDateString('fr-FR'),W-M,289,{align:'right'});
+      doc.save(fn);
+      showToast('✓ PDF téléchargé : '+fn,'ok');
+    } catch(e){ showToast('Erreur : '+e.message,'err'); console.error(e); }
+  },200);
+}
+
+function renderPreview(){
+  var v=getVals();
+  document.getElementById('previewDoc').innerHTML=currentTab==='avis'?pAvis(v):pQuit(v);
+}
+function pAvis(v){
+  return '<div class="preview-doc"><div class="doc-hbar"><div class="t">AVIS D\'ÉCHÉANCE DE LOYER</div><div class="s">'+SCI.nom+' — '+SCI.siege+' — SIRET : '+SCI.siret+'</div></div><div class="doc-parties"><div class="doc-party"><div class="pl">Bailleur</div><div class="pn">'+SCI.nom+'</div><div class="pi">'+SCI.siege+'<br>Gérant : '+SCI.gerant+'</div></div><div class="doc-party"><div class="pl">Locataire</div><div class="pn">'+SCI.locataire+'</div><div class="pi">69 avenue du Maréchal Leclerc<br>93190 Livry-Gargan</div></div></div><div class="doc-subj">APPEL DE LOYER — '+v.periode+'</div><table class="doc-table"><tr><th>Désignation</th><th style="text-align:right">Montant</th></tr><tr><td>Loyer — '+v.periode+' (charges comprises)</td><td style="text-align:right">'+fmt(v.ht)+'</td></tr><tr><td>TVA '+v.tvaRate+'%</td><td style="text-align:right">'+fmt(v.tvaAmt)+'</td></tr><tr class="tot"><td><strong>TOTAL À RÉGLER TTC</strong></td><td style="text-align:right"><strong>'+fmt(v.ttc)+'</strong></td></tr></table><div class="doc-pay"><strong>Virement bancaire</strong> — IBAN : <strong>'+v.iban+'</strong><br><strong>Échéance :</strong> '+v.dateE+'</div><div class="doc-nv">Sans valeur de quittance</div><div class="doc-sig"><div class="sig-b"><div class="sl">Le Gérant,</div><div class="ss"></div><div class="sn">'+SCI.gerant+'</div></div></div><div class="doc-foot"><span>'+SCI.nom+' — SIRET : '+SCI.siret+'</span><span>'+new Date().toLocaleDateString('fr-FR')+'</span></div></div>';
+}
+function pQuit(v){
+  return '<div class="preview-doc"><div class="doc-hbar"><div class="t">QUITTANCE DE LOYER</div><div class="s">'+SCI.nom+' — '+SCI.siege+' — SIRET : '+SCI.siret+'</div></div><div class="doc-parties"><div class="doc-party"><div class="pl">Bailleur</div><div class="pn">'+SCI.nom+'</div><div class="pi">'+SCI.siege+'<br>Gérant : '+SCI.gerant+'</div></div><div class="doc-party"><div class="pl">Locataire</div><div class="pn">'+SCI.locataire+'</div><div class="pi">69 avenue du Maréchal Leclerc<br>93190 Livry-Gargan</div></div></div><div class="doc-subj">QUITTANCE DE LOYER — '+v.periode+'</div><p style="font-size:12px;color:#555;margin:0.8rem 0;">Je soussigné(e) <strong>'+SCI.gerant+'</strong>, gérant de <strong>'+SCI.nom+'</strong>, déclare avoir reçu de <strong>'+SCI.locataire+'</strong> la somme de <strong>'+fmt(v.ttc)+'</strong>, en règlement <strong>complet et intégral</strong> pour <strong>'+v.periode+'</strong>.</p><table class="doc-table"><tr><th>Désignation</th><th style="text-align:right">Montant</th></tr><tr><td>Loyer — '+v.periode+' (charges comprises)</td><td style="text-align:right">'+fmt(v.ht)+'</td></tr><tr><td>TVA '+v.tvaRate+'%</td><td style="text-align:right">'+fmt(v.tvaAmt)+'</td></tr><tr class="tot"><td><strong>TOTAL REÇU TTC</strong></td><td style="text-align:right"><strong>'+fmt(v.ttc)+'</strong></td></tr></table><p style="font-size:12px;color:#555;margin:0.5rem 0;">Virement bancaire — Reçu le : <strong>'+v.dateP+'</strong></p><div class="doc-sig"><div class="sig-b"><div class="sl">Le Gérant,</div><div class="ss"></div><div class="sn">'+SCI.gerant+'</div></div></div><div class="doc-foot"><span>'+SCI.nom+' — SIRET : '+SCI.siret+'</span><span>'+new Date().toLocaleDateString('fr-FR')+'</span></div></div>';
+}
+
+window.onload = function(){
+  var now=new Date();
+  document.getElementById('mois').value=now.getMonth()+1;
+  document.getElementById('annee').value=now.getFullYear();
+  document.getElementById('dateEcheance').value=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
+  document.getElementById('datePaiement').value=now.toISOString().split('T')[0];
+  var ids=['loyerHT','tva','mois','annee','dateEcheance','datePaiement'];
+  for(var i=0;i<ids.length;i++){
+    document.getElementById(ids[i]).addEventListener('input',updateAmounts);
+  }
+  loadIban();
+  updateAmounts();
+};
+</script>
+</body>
+</html>
