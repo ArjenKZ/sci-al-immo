@@ -1,11 +1,245 @@
-import { useState } from "react";
+<!DOCTYPE html>
 
-// ═══════════════════════════════════════════════
-// RÈGLES FDJ OFFICIELLES — LOTO FOOT 15
-// Tableau des mises : lignes=doublés(0..9), colonnes=triplés(0..6)
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Loto Foot 15 — N°32 | 3 000 000 €</title>
+<style>
+:root{
+  --g:#00e676;--gd:#00c853;--gold:#ffd600;--red:#ff3d00;--blue:#40c4ff;
+  --bg:#0a0f0d;--s:#111a14;--s2:#162019;--b:#1e3022;--t:#e8f5e9;--m:#6a8a6e;--draw:#78909c;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;padding-bottom:40px}
+.wrap{max-width:700px;margin:0 auto;padding:12px}
+
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;padding:14px 0 12px;border-bottom:1px solid var(–b);margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(–g),var(–gd));display:grid;place-items:center;font-size:19px;box-shadow:0 0 14px rgba(0,230,118,0.3);flex-shrink:0}
+.logo h1{font-size:1.15rem;font-weight:800;letter-spacing:0.5px;line-height:1.2}
+.logo p{font-size:0.6rem;color:var(–m);text-transform:uppercase;letter-spacing:1.5px}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
+.badge{padding:3px 8px;border-radius:20px;font-size:0.62rem;font-weight:700;letter-spacing:0.5px}
+.bg{background:rgba(255,214,0,0.1);border:1px solid rgba(255,214,0,0.35);color:var(–gold)}
+.bgreen{background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.35);color:var(–g)}
+
+/* BOUTON IA — LE PLUS IMPORTANT */
+.ai-cta{background:var(–s);border:2px solid rgba(255,214,0,0.5);border-radius:12px;padding:14px;margin-bottom:14px}
+.ai-cta-title{font-size:0.85rem;font-weight:700;color:var(–t);margin-bottom:4px}
+.ai-cta-sub{font-size:0.7rem;color:var(–m);margin-bottom:12px;line-height:1.5}
+.btn-ai{width:100%;padding:14px;border:none;border-radius:10px;cursor:pointer;font-size:0.92rem;font-weight:800;background:linear-gradient(135deg,var(–gold),#ff8f00);color:#000;letter-spacing:0.3px;box-shadow:0 0 20px rgba(255,214,0,0.25)}
+.btn-ai:disabled{opacity:0.55;cursor:not-allowed}
+.btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn-sm{flex:1;min-width:80px;padding:9px 10px;border:1px solid var(–b);border-radius:8px;cursor:pointer;font-size:0.76rem;font-weight:600;background:transparent;color:var(–t)}
+
+/* RÉSULTAT IA */
+.ai-result{background:var(–s);border:1px solid rgba(0,230,118,0.25);border-radius:12px;padding:14px;margin-bottom:14px;display:none}
+.ai-result.show{display:block}
+.ai-result-title{font-size:0.72rem;font-weight:700;color:var(–g);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.ai-result-text{font-size:0.78rem;line-height:1.85;color:var(–t);white-space:pre-wrap}
+.ai-thinking{display:flex;align-items:center;gap:6px;color:var(–m);font-size:0.78rem}
+.dot{width:6px;height:6px;border-radius:50%;background:var(–g);display:inline-block;animation:pulse 1.2s infinite}
+.dot:nth-child(2){animation-delay:0.2s}.dot:nth-child(3){animation-delay:0.4s}
+@keyframes pulse{0%,80%,100%{opacity:0.2}40%{opacity:1}}
+
+/* RÈGLES */
+.rules{padding:8px 11px;border-radius:8px;background:rgba(64,196,255,0.07);border:1px solid rgba(64,196,255,0.2);color:var(–blue);font-size:0.7rem;line-height:1.6;margin-bottom:14px}
+
+/* STATS BARRE */
+.stats-bar{display:flex;gap:12px;flex-wrap:wrap;font-size:0.72rem;color:var(–m);margin-bottom:10px;padding:8px 10px;background:var(–s);border-radius:8px;border:1px solid var(–b)}
+.stats-bar b{color:var(–t)}
+
+/* MATCHS */
+.match-card{background:var(–s);border:1px solid var(–b);border-radius:10px;margin-bottom:8px;overflow:hidden}
+.match-card.piege{border-color:rgba(255,214,0,0.35)}
+.match-top{display:grid;grid-template-columns:20px 1fr auto;gap:8px;align-items:start;padding:9px 11px;background:var(–s2)}
+.match-num{font-family:monospace;font-size:0.68rem;color:var(–m);font-weight:700;text-align:center;padding-top:2px}
+.piege-tag{font-size:0.45rem;background:rgba(255,214,0,0.15);border:1px solid rgba(255,214,0,0.4);color:var(–gold);border-radius:3px;padding:1px 3px;margin-top:2px;text-align:center}
+.match-comp{font-size:0.56rem;color:var(–m);text-transform:uppercase;letter-spacing:0.5px}
+.match-teams{font-size:0.83rem;font-weight:700;line-height:1.3}
+.match-away{color:var(–m);font-size:0.72rem;font-weight:400}
+.proba-bar{display:flex;gap:2px;height:3px;border-radius:2px;overflow:hidden;margin:4px 0 2px}
+.pb1{background:var(–g)}.pbN{background:var(–draw)}.pb2{background:var(–red)}
+.proba-labels{display:flex;gap:6px;font-size:0.55rem;color:var(–m);font-family:monospace}
+.toggle-data{background:none;border:none;cursor:pointer;font-size:0.58rem;color:var(–m);padding:0;margin-top:3px;display:block;text-align:left}
+
+/* BOUTONS 1/N/2 */
+.result-btns{display:flex;gap:3px;margin-bottom:3px}
+.rbtn{flex:1;padding:6px 2px;border:1px solid var(–b);background:transparent;color:var(–m);border-radius:7px;cursor:pointer;font-family:monospace;font-size:0.72rem;font-weight:700;text-align:center;transition:all 0.13s;-webkit-appearance:none}
+.rbtn.a1{background:rgba(0,230,118,0.15);border-color:var(–g);color:var(–g)}
+.rbtn.aN{background:rgba(120,144,156,0.15);border-color:var(–draw);color:var(–draw)}
+.rbtn.a2{background:rgba(255,61,0,0.15);border-color:var(–red);color:var(–red)}
+
+/* D/T */
+.dt-btns{display:flex;gap:3px}
+.dtbtn{flex:1;padding:3px;border:1px solid var(–b);background:transparent;color:var(–m);border-radius:5px;cursor:pointer;font-size:0.57rem;font-weight:700;-webkit-appearance:none}
+.dtbtn.aD{background:rgba(64,196,255,0.15);border-color:var(–blue);color:var(–blue)}
+.dtbtn.aT{background:rgba(255,214,0,0.15);border-color:var(–gold);color:var(–gold)}
+.dtbtn:disabled{opacity:0.15;cursor:not-allowed}
+
+/* DONNÉES RÉELLES */
+.match-data{padding:10px 11px;border-top:1px solid var(–b);display:none}
+.match-data.open{display:block}
+.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
+.data-block{background:var(–bg);border:1px solid var(–b);border-radius:7px;padding:8px}
+.data-block-title{font-size:0.58rem;text-transform:uppercase;letter-spacing:1px;color:var(–m);font-weight:700;margin-bottom:5px}
+.data-row{font-size:0.65rem;color:var(–m);margin-bottom:3px;line-height:1.4}
+.data-row b{color:var(–t)}
+.abs-text{font-size:0.62rem;color:var(–red);line-height:1.4}
+.form-dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:2px;font-size:7px;line-height:11px;text-align:center;color:#000;font-weight:700}
+.fw{background:var(–g)}.fd{background:var(–draw)}.fl{background:var(–red)}
+.data-full{background:var(–bg);border:1px solid var(–b);border-radius:7px;padding:8px;margin-bottom:6px;font-size:0.65rem;color:var(–m);line-height:1.5}
+.verdict-box{background:rgba(0,0,0,0.3);border-radius:7px;padding:8px 9px;font-size:0.66rem;color:var(–m);line-height:1.6}
+
+/* COÛT */
+.cost-card{background:var(–s);border:1px solid var(–b);border-radius:10px;overflow:hidden;margin-bottom:10px}
+.cost-header{padding:9px 12px;border-bottom:1px solid var(–b);background:var(–s2);font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.cost-body{padding:12px}
+.cost-inner{background:var(–s2);border:1px solid var(–b);border-radius:8px;padding:10px;margin-bottom:10px}
+.cost-row{display:flex;justify-content:space-between;padding:3px 0;font-size:0.73rem}
+.cost-row .lbl{color:var(–m)}.cost-row .val{font-family:monospace;font-weight:600}
+.cost-total{border-top:1px solid var(–b);margin-top:6px;padding-top:7px;display:flex;justify-content:space-between;font-weight:800}
+.cost-total .val{color:var(–gold);font-size:1rem;font-family:monospace}
+.limit-lbl{display:flex;justify-content:space-between;font-size:0.65rem;color:var(–m);margin-bottom:3px}
+.limit-track{height:5px;background:var(–b);border-radius:3px;overflow:hidden}
+.limit-fill{height:100%;border-radius:3px;transition:width 0.3s;background:linear-gradient(90deg,var(–g),var(–gold))}
+.limit-fill.danger{background:linear-gradient(90deg,var(–gold),var(–red))}
+
+/* TABLEAU MISES */
+.mise-table{border-collapse:collapse;font-size:0.58rem;width:100%;margin-top:8px;overflow-x:auto;display:block}
+.mise-table th{background:var(–s2);color:var(–m);padding:3px 5px;border:1px solid var(–b);white-space:nowrap}
+.mise-table td{padding:3px 5px;border:1px solid var(–b);text-align:center;font-family:monospace;white-space:nowrap}
+.mise-table td.empty{color:var(–b);background:rgba(0,0,0,0.2)}
+.mise-table tr.cur-row td:not(.empty){background:rgba(255,214,0,0.08)}
+.mise-table td.cur-cell{background:rgba(255,214,0,0.22)!important;color:var(–gold)!important;font-weight:700!important;border-color:var(–gold)!important}
+
+/* RANGS */
+.rang-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(–b);font-size:0.72rem}
+.rang-row .lbl{color:var(–m)}.rang-row .val{font-family:monospace;color:var(–gold);font-weight:700}
+.rang-row.r1{color:var(–gold)}
+
+.disclaimer{font-size:0.6rem;color:var(–m);text-align:center;padding:12px 0;border-top:1px solid var(–b);margin-top:16px;opacity:0.45;line-height:1.6}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">⚽</div>
+      <div>
+        <h1>Loto Foot 15 — N°32</h1>
+        <p>Données réelles · Règles FDJ · 25/04/2026</p>
+      </div>
+    </div>
+    <div class="badges">
+      <span class="badge bg">🏆 3 000 000 €</span>
+      <span class="badge bgreen">⏰ 20h55</span>
+    </div>
+  </div>
+
+  <!-- BOUTON ANALYSE — EN HAUT BIEN VISIBLE -->
+
+  <div class="ai-cta">
+    <div class="ai-cta-title">🤖 Analyse Claude IA</div>
+    <div class="ai-cta-sub">Clique directement ci-dessous — pas besoin de remplir la grille. Claude analyse les 15 matchs avec les données réelles (forme, blessés, classement, enjeu, H2H) et te donne ses recommandations complètes.</div>
+    <button class="btn-ai" id="btnAI" onclick="getAI()">🤖 Lancer l'analyse Claude</button>
+    <div class="btn-row">
+      <button class="btn-sm" onclick="fillFav()">⭐ Favoris</button>
+      <button class="btn-sm" onclick="autoSuggest()">⚡ Auto D/T</button>
+      <button class="btn-sm" onclick="resetAll()">↺ Reset</button>
+    </div>
+  </div>
+
+  <!-- RÉSULTAT IA -->
+
+  <div class="ai-result" id="aiResult">
+    <div class="ai-result-title">🤖 Analyse Claude IA</div>
+    <div id="aiContent"></div>
+  </div>
+
+  <!-- RÈGLES -->
+
+  <div class="rules">
+    📋 <b>D = Doublé</b> (2 résultats sur un match → ×2 le coût) · <b>T = Triplé</b> (3 résultats → ×3) · Coût = 2<sup>D</sup>×3<sup>T</sup> · Max 768€ · Prolongations non comptées · Gain min 11/15
+  </div>
+
+  <!-- STATS -->
+
+  <div class="stats-bar">
+    <span>Pronostiqués : <b id="statFilled">0/15</b></span>
+    <span>Qualité : <b id="statQ">0%</b></span>
+    <span>D: <b id="statD">0</b> · T: <b id="statT">0</b> · Coût: <b id="statCost">1€</b></span>
+  </div>
+
+  <!-- LISTE MATCHS -->
+
+  <div id="matchList"></div>
+
+  <!-- COÛT DÉTAIL -->
+
+  <div class="cost-card">
+    <div class="cost-header" onclick="toggleSection('costBody')">
+      💶 Coût FDJ officiel <span id="costChevron">▼</span>
+    </div>
+    <div class="cost-body" id="costBody">
+      <div class="cost-inner">
+        <div class="cost-row"><span class="lbl">Base</span><span class="val">1 €</span></div>
+        <div class="cost-row"><span class="lbl" id="dLbl">Doublés (0)</span><span class="val" id="dMult">× 1</span></div>
+        <div class="cost-row"><span class="lbl" id="tLbl">Triplés (0)</span><span class="val" id="tMult">× 1</span></div>
+        <div class="cost-total"><span class="lbl">TOTAL</span><span class="val" id="totalCost">1 €</span></div>
+      </div>
+      <div class="limit-lbl"><span>Plafond FDJ (max 768€)</span><span id="limitPct">0%</span></div>
+      <div class="limit-track"><div class="limit-fill" id="limitFill" style="width:0%"></div></div>
+      <div id="limitAlert" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- TABLEAU MISES -->
+
+  <div class="cost-card">
+    <div class="cost-header" onclick="toggleSection('miseBody')">
+      📊 Tableau des mises FDJ <span>▼</span>
+    </div>
+    <div class="cost-body" id="miseBody" style="display:none">
+      <div style="font-size:0.64rem;color:var(--m);margin-bottom:6px">Lignes=Doublés · Colonnes=Triplés · <span style="color:var(--gold)">■</span> = ta combinaison · — = interdit</div>
+      <table class="mise-table" id="miseTable"></table>
+    </div>
+  </div>
+
+  <!-- ÉCHELONS -->
+
+  <div class="cost-card">
+    <div class="cost-header" onclick="toggleSection('rangBody')">
+      💰 Échelons de gains <span>▼</span>
+    </div>
+    <div class="cost-body" id="rangBody" style="display:none">
+      <div class="rang-row r1"><span class="lbl">Rang 1</span><span class="lbl">15/15</span><span class="val">3 000 000 € 🏆</span></div>
+      <div class="rang-row"><span class="lbl">Rang 2</span><span class="lbl">13/15</span><span class="val" style="color:var(--m)">Mutuel</span></div>
+      <div class="rang-row"><span class="lbl">Rang 3</span><span class="lbl">12/15</span><span class="val" style="color:var(--m)">Mutuel</span></div>
+      <div class="rang-row"><span class="lbl">Rang 4</span><span class="lbl">11/15</span><span class="val" style="color:var(--m)">Mutuel</span></div>
+      <p style="font-size:0.63rem;color:var(--m);margin-top:8px;line-height:1.5">Gains rangs 2-4 partagés. Prolongations non comptées.</p>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    Sources : Parions Sport FDJ · Foot Mercato / Top Mercato / L'Équipe (24-25 avr 2026)<br>
+    Jeu de hasard — Jouez responsable — Joueurs Info Service : 09 74 75 13 13
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// RÈGLES FDJ — Tableau mises LF15
+// Lignes=Doublés (0-9), Colonnes=Triplés (0-6)
 // null = combinaison interdite
-// ═══════════════════════════════════════════════
-const MISE_TABLE = [
+// ═══════════════════════════════════════
+const MT=[
   [1,3,9,27,81,243,729],
   [2,6,18,54,162,486,null],
   [4,12,36,108,324,null,null],
@@ -17,480 +251,328 @@ const MISE_TABLE = [
   [256,768,null,null,null,null,null],
   [512,null,null,null,null,null,null],
 ];
+const ok=(d,t)=>d<MT.length&&t<MT[0].length&&MT[d][t]!==null;
+const cost=(d,t)=>ok(d,t)?MT[d][t]:0;
 
-const isAllowed = (d, t) => d < MISE_TABLE.length && t < MISE_TABLE[0].length && MISE_TABLE[d][t] !== null;
-const getCost = (d, t) => (isAllowed(d, t) ? MISE_TABLE[d][t] : 0);
-
-// ═══════════════════════════════════════════════
-// DONNÉES RÉELLES — Grille N°32 du 25/04/2026
-// Sources : Parions Sport FDJ, Foot Mercato, Top Mercato, L'Équipe
-// ═══════════════════════════════════════════════
-const MATCHES = [
-  { id:1, comp:"L1", home:"Marseille", away:"Nice", p1:73,pN:16,p2:11,
-    homeRank:"6e (52pts)", awayRank:"15e (29pts)",
-    homeForm:["W","W","L","L","W"], awayForm:["W","D","D","W","W"],
-    homeAbs:"Aguerd ❌ Egan-Riley ❌ Kondogbia ❌ Paixão ❌ Gouiri ❌ Balerdi ⚠️",
-    awayAbs:"Bombito ❌ Dante ❌ Ndayishimiye ❌ Everton ❌",
-    enjeu:"OM sans 5 titulaires clés. Nice fatiguée post-finale Coupe mais en forme (3 matchs sans défaite).",
-    h2h:"114 L1 : 60V OM / 24N / 30V Nice. Dernière : OM 1-5 Nice (nov 25).",
-    verdict:"⚡ PIÈGE — OM très décimé. Nice meilleure forme récente. Doublé 1N conseillé.", piege:true },
-  { id:2, comp:"L1", home:"Toulouse", away:"Monaco", p1:21,pN:22,p2:57,
-    homeRank:"Milieu", awayRank:"Top 3",
-    homeForm:["L","L","D","W","L"], awayForm:["W","W","W","D","W"],
-    homeAbs:"À vérifier", awayAbs:"À vérifier",
-    enjeu:"Monaco en lutte pour le titre, Toulouse sans enjeu.",
-    h2h:"Monaco domine Toulouse.",
-    verdict:"Monaco grand favori en pleine forme. Résultat 2 logique.", piege:false },
-  { id:3, comp:"L1", home:"Lorient", away:"Strasbourg", p1:49,pN:25,p2:26,
-    homeRank:"Zone rouge", awayRank:"Milieu",
-    homeForm:["W","L","W","D","L"], awayForm:["L","W","D","L","W"],
-    homeAbs:"À vérifier", awayAbs:"À vérifier",
-    enjeu:"Lorient joue sa survie. Pression maximale pour le maintien.",
-    h2h:"Bilan équilibré, matchs souvent serrés.",
-    verdict:"⚡ PIÈGE — 49/25/26 ultra-serré. Lorient motivé mais fragile. Triplé ou doublé 1N.", piege:true },
-  { id:4, comp:"L1", home:"Paris FC", away:"Lille", p1:21,pN:26,p2:53,
-    homeRank:"Milieu", awayRank:"Top 5",
-    homeForm:["L","D","L","W","D"], awayForm:["W","W","L","W","W"],
-    homeAbs:"À vérifier", awayAbs:"À vérifier",
-    enjeu:"Lille en course européenne. Paris FC sans pression.",
-    h2h:"Lille largement supérieur historiquement.",
-    verdict:"Lille favori net en très bonne forme. Résultat 2 tenu.", piege:false },
-  { id:5, comp:"L1", home:"Rennes", away:"Nantes", p1:79,pN:14,p2:7,
-    homeRank:"Milieu-haut", awayRank:"Zone rouge",
-    homeForm:["W","W","D","W","W"], awayForm:["L","L","D","L","L"],
-    homeAbs:"À vérifier", awayAbs:"À vérifier",
-    enjeu:"Nantes en crise profonde. Rennes très solide à domicile.",
-    h2h:"Rennes domine ce derby breton.",
-    verdict:"Rennes grand favori (79%). Le pronostic le plus fiable de la grille.", piege:false },
-  { id:6, comp:"L1", home:"Le Havre", away:"Metz", p1:65,pN:22,p2:13,
-    homeRank:"Milieu", awayRank:"Bas",
-    homeForm:["W","D","W","D","W"], awayForm:["L","L","D","L","D"],
-    homeAbs:"À vérifier", awayAbs:"À vérifier",
-    enjeu:"Metz en grande difficulté, Le Havre solide à domicile.",
-    h2h:"Avantage Le Havre à domicile.",
-    verdict:"Le Havre favori net (65%). Résultat 1 logique.", piege:false },
-  { id:7, comp:"Serie A", home:"Torino", away:"Inter Milan", p1:8,pN:15,p2:77,
-    homeRank:"Milieu", awayRank:"Top 2",
-    homeForm:["L","D","L","W","L"], awayForm:["W","W","W","W","D"],
-    homeAbs:"À vérifier", awayAbs:"À vérifier",
-    enjeu:"Inter en course pour le Scudetto. Torino sans enjeu.",
-    h2h:"Inter domine très largement Torino.",
-    verdict:"Inter ultra-favori (77%) en pleine forme. Résultat 2 quasi-certain.", piege:false },
-  { id:8, comp:"Serie A", home:"Milan AC", away:"Juventus", p1:31,pN:32,p2:37,
-    homeRank:"2e (66pts)", awayRank:"4e (63pts)",
-    homeForm:["L","L","L","W","W"], awayForm:["W","W","W","D","W"],
-    homeAbs:"Saelemaekers ❌ (musculaire) Jashari ❌ (péroné)",
-    awayAbs:"Milik ❌ Cabal ❌ Locatelli ❌ Vlahović ❌ Kelly ❌",
-    enjeu:"Milan en mauvaise forme (3L/5, 0.8 but/match). Juve en excellente forme (4V1N/5).",
-    h2h:"Derby ultra-équilibré historiquement.",
-    verdict:"⚡ PIÈGE MAJEUR — 31/32/37. Juve bien meilleure forme récente. Doublé N2 ou triplé.", piege:true },
-  { id:9, comp:"Serie A", home:"Fiorentina", away:"Sassuolo", p1:55,pN:26,p2:19,
-    homeRank:"Milieu-haut", awayRank:"Bas",
-    homeForm:["W","D","W","W","D"], awayForm:["L","L","D","L","W"],
-    homeAbs:"À vérifier", awayAbs:"À vérifier",
-    enjeu:"Fiorentina solide à domicile. Sassuolo en difficulté.",
-    h2h:"Fiorentina domine Sassuolo à domicile.",
-    verdict:"Fiorentina favori logique (55%). Résultat 1 tenu.", piege:false },
-  { id:10, comp:"LaLiga", home:"Rayo Vallecano", away:"Real Sociedad", p1:34,pN:30,p2:36,
-    homeRank:"Milieu", awayRank:"7e",
-    homeForm:["W","D","L","W","D"], awayForm:["L","D","W","W","W"],
-    homeAbs:"À vérifier", awayAbs:"À vérifier",
-    enjeu:"Real Sociedad vient de gagner la Copa del Rey le 18/04 — fatigue + euphorie possible.",
-    h2h:"Bilan très équilibré, matchs souvent serrés.",
-    verdict:"⚡ PIÈGE — 34/30/36 extrêmement serré. Fatigue post-finale Copa. Triplé conseillé.", piege:true },
-  { id:11, comp:"LaLiga", home:"Villarreal", away:"Celta Vigo", p1:55,pN:24,p2:21,
-    homeRank:"Milieu-haut", awayRank:"Bas",
-    homeForm:["W","W","D","W","L"], awayForm:["L","D","L","W","L"],
-    homeAbs:"À vérifier", awayAbs:"À vérifier",
-    enjeu:"Villarreal solide à domicile. Celta en difficulté.",
-    h2h:"Avantage Villarreal à domicile.",
-    verdict:"Villarreal favori net (55%). Résultat 1 logique.", piege:false },
-  { id:12, comp:"LaLiga", home:"Atl. Madrid", away:"Ath. Bilbao", p1:51,pN:25,p2:24,
-    homeRank:"4e LaLiga", awayRank:"Top 6",
-    homeForm:["L","L","L","L","L"], awayForm:["W","D","W","L","W"],
-    homeAbs:"Barrios ❌ Gimenez ⚠️ Hancko ⚠️ — demi LdC vs Arsenal le 29/04",
-    awayAbs:"À vérifier",
-    enjeu:"⚠️ ALERTE ROUGE : Atletico a perdu 7 de ses 8 derniers matchs ! Gestion énergie avant LdC.",
-    h2h:"Atletico normalement fort à domicile, mais série noire historique actuellement.",
-    verdict:"⚡ PIÈGE ÉNORME — Atletico (51%) en crise totale (7D/8). Athletic en forme. Doublé 1N impératif.", piege:true },
-  { id:13, comp:"D1 Turquie", home:"Galatasaray", away:"Fenerbahce", p1:45,pN:28,p2:27,
-    homeRank:"Lutte titre", awayRank:"Lutte titre",
-    homeForm:["W","W","D","W","L"], awayForm:["W","D","W","W","L"],
-    homeAbs:"À vérifier", awayAbs:"À vérifier",
-    enjeu:"Derby d'Istanbul pour le titre. Tension extrême, résultat très imprévisible.",
-    h2h:"Derby ultra-équilibré, surprises fréquentes.",
-    verdict:"⚡ PIÈGE — 45/28/27, derby de titre explosif. Doublé 1N ou triplé.", piege:true },
-  { id:14, comp:"Bundesliga", home:"Dortmund", away:"Fribourg", p1:81,pN:13,p2:6,
-    homeRank:"2e (64pts)", awayRank:"7e (43pts)",
-    homeForm:["W","W","W","L","L"], awayForm:["W","L","W","D","L"],
-    homeAbs:"À vérifier", awayAbs:"À vérifier",
-    enjeu:"Dortmund solide au Signal Iduna Park. Fribourg sans enjeu majeur.",
-    h2h:"Dortmund très dominant à domicile face à Fribourg.",
-    verdict:"Dortmund grand favori (81%). Le plus fiable de la grille après Rennes.", piege:false },
-  { id:15, comp:"FA Cup", home:"Chelsea", away:"Leeds Utd", p1:52,pN:24,p2:24,
-    homeRank:"PL Top 6", awayRank:"Montée Championship",
-    homeForm:["W","D","W","L","W"], awayForm:["W","W","D","L","W"],
-    homeAbs:"À vérifier", awayAbs:"À vérifier",
-    enjeu:"Match couperet FA Cup. Chelsea favori mais Leeds souvent surprenant dans ce contexte.",
-    h2h:"Chelsea supérieur mais FA Cup = compétition à surprises.",
-    verdict:"⚡ PIÈGE — 52/24/24 très serré, match à élimination. Doublé 1N conseillé.", piege:true },
+// ═══════════════════════════════════════
+// DONNÉES RÉELLES — Grille N°32 25/04/2026
+// Sources : Parions Sport FDJ (probas)
+//           Foot Mercato / Top Mercato / L'Équipe (blessés, forme)
+// ═══════════════════════════════════════
+const M=[
+  {id:1,comp:"L1",home:"Marseille",away:"Nice",p1:73,pN:16,p2:11,
+   hRank:"6e (52pts)",aRank:"15e (29pts)",
+   hForm:["W","W","L","L","W"],aForm:["W","D","D","W","W"],
+   hAbs:"Aguerd ❌ Egan-Riley ❌ Kondogbia ❌ Paixão ❌ Gouiri ❌ Balerdi ⚠️",
+   aAbs:"Bombito ❌ Dante ❌ Ndayishimiye ❌ Everton ❌",
+   enjeu:"OM sans 5 titulaires clés. Nice en forme (3 matchs sans défaite) mais fatiguée post-finale Coupe.",
+   h2h:"114 L1 : 60V OM / 24N / 30V Nice. Dernière : OM 1-5 Nice (nov 25).",
+   verdict:"⚡ PIÈGE — OM très décimé. Nice meilleure forme récente. Doublé 1N conseillé.",piege:true},
+  {id:2,comp:"L1",home:"Toulouse",away:"Monaco",p1:21,pN:22,p2:57,
+   hRank:"Milieu",aRank:"Top 3",
+   hForm:["L","L","D","W","L"],aForm:["W","W","W","D","W"],
+   hAbs:"À vérifier",aAbs:"À vérifier",
+   enjeu:"Monaco en lutte pour le titre. Toulouse sans enjeu.",
+   h2h:"Monaco domine Toulouse.",
+   verdict:"Monaco grand favori en pleine forme. Résultat 2 logique.",piege:false},
+  {id:3,comp:"L1",home:"Lorient",away:"Strasbourg",p1:49,pN:25,p2:26,
+   hRank:"Zone rouge",aRank:"Milieu",
+   hForm:["W","L","W","D","L"],aForm:["L","W","D","L","W"],
+   hAbs:"À vérifier",aAbs:"À vérifier",
+   enjeu:"Lorient joue sa survie. Pression maximale pour le maintien.",
+   h2h:"Bilan équilibré, matchs souvent serrés.",
+   verdict:"⚡ PIÈGE — 49/25/26 ultra-serré. Lorient motivé mais fragile. Triplé ou doublé 1N.",piege:true},
+  {id:4,comp:"L1",home:"Paris FC",away:"Lille",p1:21,pN:26,p2:53,
+   hRank:"Milieu",aRank:"Top 5",
+   hForm:["L","D","L","W","D"],aForm:["W","W","L","W","W"],
+   hAbs:"À vérifier",aAbs:"À vérifier",
+   enjeu:"Lille en course européenne. Paris FC sans pression.",
+   h2h:"Lille largement supérieur historiquement.",
+   verdict:"Lille favori net en très bonne forme. Résultat 2 tenu.",piege:false},
+  {id:5,comp:"L1",home:"Rennes",away:"Nantes",p1:79,pN:14,p2:7,
+   hRank:"Milieu-haut",aRank:"Zone rouge",
+   hForm:["W","W","D","W","W"],aForm:["L","L","D","L","L"],
+   hAbs:"À vérifier",aAbs:"À vérifier",
+   enjeu:"Nantes en crise profonde. Rennes très solide à domicile.",
+   h2h:"Rennes domine ce derby breton.",
+   verdict:"Rennes grand favori (79%). L'un des 2 pronostics les plus fiables.",piege:false},
+  {id:6,comp:"L1",home:"Le Havre",away:"Metz",p1:65,pN:22,p2:13,
+   hRank:"Milieu",aRank:"Bas",
+   hForm:["W","D","W","D","W"],aForm:["L","L","D","L","D"],
+   hAbs:"À vérifier",aAbs:"À vérifier",
+   enjeu:"Metz en grande difficulté. Le Havre solide à domicile.",
+   h2h:"Avantage Le Havre à domicile.",
+   verdict:"Le Havre favori net (65%). Résultat 1 logique.",piege:false},
+  {id:7,comp:"Serie A",home:"Torino",away:"Inter Milan",p1:8,pN:15,p2:77,
+   hRank:"Milieu",aRank:"Top 2",
+   hForm:["L","D","L","W","L"],aForm:["W","W","W","W","D"],
+   hAbs:"À vérifier",aAbs:"À vérifier",
+   enjeu:"Inter en course pour le Scudetto. Torino sans enjeu.",
+   h2h:"Inter domine très largement Torino.",
+   verdict:"Inter ultra-favori (77%) en pleine forme. Résultat 2 quasi-certain.",piege:false},
+  {id:8,comp:"Serie A",home:"Milan AC",away:"Juventus",p1:31,pN:32,p2:37,
+   hRank:"2e (66pts)",aRank:"4e (63pts)",
+   hForm:["L","L","L","W","W"],aForm:["W","W","W","D","W"],
+   hAbs:"Saelemaekers ❌ (musculaire) Jashari ❌ (péroné)",
+   aAbs:"Milik ❌ Cabal ❌ Locatelli ❌ Vlahović ❌ Kelly ❌",
+   enjeu:"Milan en mauvaise forme (3L/5, 0.8 but/match). Juve excellente forme (4V1N/5).",
+   h2h:"Derby ultra-équilibré historiquement.",
+   verdict:"⚡ PIÈGE MAJEUR — 31/32/37. Juve bien meilleure forme. Doublé N2 ou triplé.",piege:true},
+  {id:9,comp:"Serie A",home:"Fiorentina",away:"Sassuolo",p1:55,pN:26,p2:19,
+   hRank:"Milieu-haut",aRank:"Bas",
+   hForm:["W","D","W","W","D"],aForm:["L","L","D","L","W"],
+   hAbs:"À vérifier",aAbs:"À vérifier",
+   enjeu:"Fiorentina solide à domicile. Sassuolo en difficulté.",
+   h2h:"Fiorentina domine Sassuolo à domicile.",
+   verdict:"Fiorentina favori logique (55%). Résultat 1 tenu.",piege:false},
+  {id:10,comp:"LaLiga",home:"Rayo Vallecano",away:"Real Sociedad",p1:34,pN:30,p2:36,
+   hRank:"Milieu",aRank:"7e",
+   hForm:["W","D","L","W","D"],aForm:["L","D","W","W","W"],
+   hAbs:"À vérifier",aAbs:"À vérifier",
+   enjeu:"Real Sociedad vient de gagner la Copa del Rey le 18/04 — fatigue + euphorie.",
+   h2h:"Bilan très équilibré, matchs souvent serrés.",
+   verdict:"⚡ PIÈGE — 34/30/36 extrêmement serré. Fatigue post-finale Copa. Triplé conseillé.",piege:true},
+  {id:11,comp:"LaLiga",home:"Villarreal",away:"Celta Vigo",p1:55,pN:24,p2:21,
+   hRank:"Milieu-haut",aRank:"Bas",
+   hForm:["W","W","D","W","L"],aForm:["L","D","L","W","L"],
+   hAbs:"À vérifier",aAbs:"À vérifier",
+   enjeu:"Villarreal solide à domicile. Celta en difficulté.",
+   h2h:"Avantage Villarreal à domicile.",
+   verdict:"Villarreal favori net (55%). Résultat 1 logique.",piege:false},
+  {id:12,comp:"LaLiga",home:"Atl. Madrid",away:"Ath. Bilbao",p1:51,pN:25,p2:24,
+   hRank:"4e LaLiga",aRank:"Top 6",
+   hForm:["L","L","L","L","L"],aForm:["W","D","W","L","W"],
+   hAbs:"Barrios ❌ Gimenez ⚠️ Hancko ⚠️ — demi LdC vs Arsenal le 29/04",
+   aAbs:"À vérifier",
+   enjeu:"⚠️ ALERTE : Atletico a perdu 7 de ses 8 derniers matchs ! Gestion énergie avant LdC.",
+   h2h:"Atletico fort à domicile normalement, mais série noire historique.",
+   verdict:"⚡ PIÈGE ÉNORME — Atletico (51%) en crise totale (7D/8). Athletic en forme. Doublé 1N impératif.",piege:true},
+  {id:13,comp:"D1 Turquie",home:"Galatasaray",away:"Fenerbahce",p1:45,pN:28,p2:27,
+   hRank:"Lutte titre",aRank:"Lutte titre",
+   hForm:["W","W","D","W","L"],aForm:["W","D","W","W","L"],
+   hAbs:"À vérifier",aAbs:"À vérifier",
+   enjeu:"Derby d'Istanbul pour le titre. Tension extrême, résultat très imprévisible.",
+   h2h:"Derby ultra-équilibré, surprises fréquentes.",
+   verdict:"⚡ PIÈGE — 45/28/27, derby de titre explosif. Doublé 1N ou triplé.",piege:true},
+  {id:14,comp:"Bundesliga",home:"Dortmund",away:"Fribourg",p1:81,pN:13,p2:6,
+   hRank:"2e (64pts)",aRank:"7e (43pts)",
+   hForm:["W","W","W","L","L"],aForm:["W","L","W","D","L"],
+   hAbs:"À vérifier",aAbs:"À vérifier",
+   enjeu:"Dortmund solide au Signal Iduna Park. Fribourg sans enjeu.",
+   h2h:"Dortmund très dominant à domicile face à Fribourg.",
+   verdict:"Dortmund grand favori (81%). L'un des 2 pronostics les plus fiables.",piege:false},
+  {id:15,comp:"FA Cup",home:"Chelsea",away:"Leeds Utd",p1:52,pN:24,p2:24,
+   hRank:"PL Top 6",aRank:"Montée Championship",
+   hForm:["W","D","W","L","W"],aForm:["W","W","D","L","W"],
+   hAbs:"À vérifier",aAbs:"À vérifier",
+   enjeu:"Match couperet FA Cup. Chelsea favori mais Leeds souvent surprenant en coupe.",
+   h2h:"Chelsea supérieur mais FA Cup = compétition à surprises.",
+   verdict:"⚡ PIÈGE — 52/24/24 très serré, match à élimination. Doublé 1N conseillé.",piege:true},
 ];
 
-const G = { green:"#00e676", gold:"#ffd600", red:"#ff3d00", blue:"#40c4ff", muted:"#6a8a6e", draw:"#78909c", bg:"#0a0f0d", surface:"#111a14", surface2:"#162019", border:"#1e3022", text:"#e8f5e9" };
+let sel=Array(15).fill(null),D=Array(15).fill(false),T=Array(15).fill(false),exp=Array(15).fill(false);
 
-const FormDot = ({ r }) => {
-  const bg = r==="W" ? G.green : r==="D" ? G.draw : G.red;
-  return <span style={{display:"inline-block",width:12,height:12,borderRadius:"50%",background:bg,marginRight:2,fontSize:8,lineHeight:"12px",textAlign:"center",color:"#000",fontWeight:700}}>{r}</span>;
-};
+function dot(r){const c=r==='W'?'fw':r==='D'?'fd':'fl';return`<span class="form-dot ${c}">${r}</span>`}
 
-const ProbaBar = ({ p1, pN, p2 }) => (
-  <div style={{display:"flex",gap:2,height:3,borderRadius:2,overflow:"hidden",margin:"4px 0 2px"}}>
-    <div style={{width:`${p1}%`,background:G.green}}/>
-    <div style={{width:`${pN}%`,background:G.draw}}/>
-    <div style={{width:`${p2}%`,background:G.red}}/>
-  </div>
-);
+function renderMatches(){
+  const list=document.getElementById('matchList');
+  list.innerHTML='';
+  const dc=D.filter(Boolean).length,tc=T.filter(Boolean).length;
+  M.forEach((m,i)=>{
+    const s=sel[i],isD=D[i],isT=T[i];
+    const canD=isD||ok(dc+1,isT?tc-1:tc);
+    const canT=isT||ok(isD?dc-1:dc,tc+1);
+    const div=document.createElement('div');
+    div.className='match-card'+(m.piege?' piege':'');
+    div.innerHTML=`
+      <div class="match-top">
+        <div>
+          <div class="match-num">${m.id}</div>
+          ${m.piege?'<div class="piege-tag">⚡</div>':''}
+        </div>
+        <div>
+          <div class="match-comp">${m.comp}</div>
+          <div class="match-teams">${m.home} <span class="match-away">vs ${m.away}</span></div>
+          <div class="proba-bar">
+            <div class="pb1" style="width:${m.p1}%"></div>
+            <div class="pbN" style="width:${m.pN}%"></div>
+            <div class="pb2" style="width:${m.p2}%"></div>
+          </div>
+          <div class="proba-labels"><span>1:${m.p1}%</span><span>N:${m.pN}%</span><span>2:${m.p2}%</span></div>
+          <button class="toggle-data" onclick="toggleExp(${i})">${exp[i]?'▲ Masquer':'▼ Données réelles'}</button>
+        </div>
+        <div style="min-width:105px">
+          <div class="result-btns">
+            <button class="rbtn ${s==='1'?'a1':''}" onclick="pick(${i},'1')">1</button>
+            <button class="rbtn ${s==='N'?'aN':''}" onclick="pick(${i},'N')">N</button>
+            <button class="rbtn ${s==='2'?'a2':''}" onclick="pick(${i},'2')">2</button>
+          </div>
+          <div class="dt-btns">
+            <button class="dtbtn ${isD?'aD':''}" onclick="toggleD(${i})" ${!canD?'disabled':''} title="Doublé : 2 résultats → ×2">D${isD?' ✓':''}</button>
+            <button class="dtbtn ${isT?'aT':''}" onclick="toggleT(${i})" ${!canT?'disabled':''} title="Triplé : 3 résultats → ×3">T${isT?' ✓':''}</button>
+          </div>
+        </div>
+      </div>
+      <div class="match-data ${exp[i]?'open':''}">
+        <div class="data-grid">
+          <div class="data-block">
+            <div class="data-block-title">🏠 ${m.home}</div>
+            <div class="data-row">📊 ${m.hRank}</div>
+            <div class="data-row">${m.hForm.map(r=>dot(r)).join('')}</div>
+            <div class="abs-text">🚑 ${m.hAbs}</div>
+          </div>
+          <div class="data-block">
+            <div class="data-block-title">✈️ ${m.away}</div>
+            <div class="data-row">📊 ${m.aRank}</div>
+            <div class="data-row">${m.aForm.map(r=>dot(r)).join('')}</div>
+            <div class="abs-text">🚑 ${m.aAbs}</div>
+          </div>
+        </div>
+        <div class="data-full"><b>⚡ Enjeu :</b> ${m.enjeu}<br><b>🔁 H2H :</b> ${m.h2h}</div>
+        <div class="verdict-box"><b style="color:#e8f5e9">Verdict : </b>${m.verdict}</div>
+      </div>`;
+    list.appendChild(div);
+  });
+}
 
-export default function App() {
-  const [sel, setSel] = useState(Array(15).fill(null));
-  const [D, setD] = useState(Array(15).fill(false));
-  const [T, setT] = useState(Array(15).fill(false));
-  const [expanded, setExpanded] = useState(Array(15).fill(false));
-  const [aiText, setAiText] = useState(null);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [showMise, setShowMise] = useState(false);
+function pick(i,v){sel[i]=sel[i]===v?null:v;renderMatches();updateStats()}
+function toggleExp(i){exp[i]=!exp[i];renderMatches()}
+function toggleD(i){
+  const dc=D.filter(Boolean).length,tc=T.filter(Boolean).length;
+  if(!D[i]){const nd=dc+1,nt=T[i]?tc-1:tc;if(!ok(nd,nt))return}
+  D[i]=!D[i];if(D[i])T[i]=false;renderMatches();updateStats();
+}
+function toggleT(i){
+  const dc=D.filter(Boolean).length,tc=T.filter(Boolean).length;
+  if(!T[i]){const nt=tc+1,nd=D[i]?dc-1:dc;if(!ok(nd,nt))return}
+  T[i]=!T[i];if(T[i])D[i]=false;renderMatches();updateStats();
+}
 
-  const dCount = D.filter(Boolean).length;
-  const tCount = T.filter(Boolean).length;
-  const cost = getCost(dCount, tCount);
-  const filled = sel.filter(Boolean).length;
+function updateStats(){
+  const filled=sel.filter(Boolean).length;
+  const dc=D.filter(Boolean).length,tc=T.filter(Boolean).length;
+  const c=cost(dc,tc);
+  let totalP=0;
+  sel.forEach((s,i)=>{if(!s)return;const m=M[i];totalP+=s==='1'?m.p1:s==='N'?m.pN:m.p2});
+  const q=filled?Math.round(totalP/filled):0;
+  document.getElementById('statFilled').textContent=filled+'/15';
+  document.getElementById('statQ').textContent=q+'%';
+  document.getElementById('statD').textContent=dc;
+  document.getElementById('statT').textContent=tc;
+  document.getElementById('statCost').textContent=c+'€';
+  document.getElementById('dLbl').textContent=`Doublés (${dc})`;
+  document.getElementById('dMult').textContent=dc?'× '+Math.pow(2,dc):'× 1';
+  document.getElementById('tLbl').textContent=`Triplés (${tc})`;
+  document.getElementById('tMult').textContent=tc?'× '+Math.pow(3,tc):'× 1';
+  document.getElementById('totalCost').textContent=c+' €';
+  const pct=Math.min(100,Math.round(c/768*100));
+  document.getElementById('limitPct').textContent=pct+'%';
+  const fill=document.getElementById('limitFill');
+  fill.style.width=pct+'%';
+  fill.className='limit-fill'+(pct>75?' danger':'');
+  document.getElementById('limitAlert').innerHTML=c>=768?'<div style="padding:5px 8px;border-radius:6px;background:rgba(255,61,0,0.08);border:1px solid rgba(255,61,0,0.25);color:#ff3d00;font-size:0.67rem">🔴 Plafond 768€ atteint</div>':'';
+  highlightMise(dc,tc);
+}
 
-  const pick = (i, v) => {
-    const ns = [...sel]; ns[i] = ns[i] === v ? null : v; setSel(ns);
-  };
+function buildMiseTable(){
+  const tbl=document.getElementById('miseTable');
+  let h='<tr><th>D\\T</th>';
+  for(let t=0;t<=6;t++)h+=`<th>${t}T</th>`;h+='</tr>';
+  MT.forEach((row,d)=>{
+    h+=`<tr data-d="${d}"><th>${d}D</th>`;
+    row.forEach((v,t)=>{h+=v===null?`<td class="empty" data-t="${t}">—</td>`:`<td data-t="${t}">${v}€</td>`});
+    h+='</tr>';
+  });
+  tbl.innerHTML=h;
+}
+function highlightMise(cd,ct){
+  document.querySelectorAll('#miseTable tr').forEach(tr=>tr.classList.remove('cur-row'));
+  document.querySelectorAll('#miseTable td').forEach(td=>td.classList.remove('cur-cell'));
+  const row=document.querySelector(`#miseTable tr[data-d="${cd}"]`);
+  if(row){row.classList.add('cur-row');const cell=row.querySelector(`td[data-t="${ct}"]`);if(cell&&!cell.classList.contains('empty'))cell.classList.add('cur-cell')}
+}
 
-  const toggleD = (i) => {
-    const newD = [...D];
-    if (!newD[i]) {
-      const nd = dCount + 1, nt = T[i] ? tCount - 1 : tCount;
-      if (!isAllowed(nd, nt)) return;
-    }
-    newD[i] = !newD[i];
-    const newT = [...T]; if (newD[i]) newT[i] = false;
-    setD(newD); setT(newT);
-  };
+function toggleSection(id){
+  const el=document.getElementById(id);
+  el.style.display=el.style.display==='none'?'block':'none';
+}
 
-  const toggleT = (i) => {
-    const newT = [...T];
-    if (!newT[i]) {
-      const nt = tCount + 1, nd = D[i] ? dCount - 1 : dCount;
-      if (!isAllowed(nd, nt)) return;
-    }
-    newT[i] = !newT[i];
-    const newD = [...D]; if (newT[i]) newD[i] = false;
-    setT(newT); setD(newD);
-  };
+function resetAll(){sel=Array(15).fill(null);D=Array(15).fill(false);T=Array(15).fill(false);renderMatches();updateStats();document.getElementById('aiResult').classList.remove('show')}
+function fillFav(){M.forEach((m,i)=>{const mx=Math.max(m.p1,m.pN,m.p2);sel[i]=mx===m.p1?'1':mx===m.pN?'N':'2'});renderMatches();updateStats()}
+function autoSuggest(){
+  let nd=[...D],nt=[...T],dc=nd.filter(Boolean).length,tc=nt.filter(Boolean).length;
+  M.filter(m=>m.piege).sort((a,b)=>Math.max(a.p1,a.pN,a.p2)-Math.max(b.p1,b.pN,b.p2)).forEach(m=>{
+    const i=m.id-1;if(!nt[i]&&!nd[i]&&ok(dc,tc+1)){nt[i]=true;tc++}
+  });
+  M.map((m,i)=>{const s=[m.p1,m.pN,m.p2].sort((a,b)=>b-a);return{i,gap:s[0]-s[1]}})
+    .filter(x=>!nd[x.i]&&!nt[x.i]&&x.gap<18).sort((a,b)=>a.gap-b.gap)
+    .forEach(({i})=>{if(ok(dc+1,tc)){nd[i]=true;dc++}});
+  D=nd;T=nt;renderMatches();updateStats();
+}
 
-  const toggleExpand = (i) => {
-    const ne = [...expanded]; ne[i] = !ne[i]; setExpanded(ne);
-  };
+async function getAI(){
+  const btn=document.getElementById('btnAI');
+  btn.disabled=true;btn.textContent='⏳ Claude analyse les 15 matchs...';
+  const res=document.getElementById('aiResult'),cont=document.getElementById('aiContent');
+  res.classList.add('show');
+  cont.innerHTML='<div class="ai-thinking"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span style="margin-left:8px">Analyse en cours avec les données réelles...</span></div>';
+  res.scrollIntoView({behavior:'smooth',block:'start'});
 
-  const reset = () => { setSel(Array(15).fill(null)); setD(Array(15).fill(false)); setT(Array(15).fill(false)); setAiText(null); };
+  const filled=sel.filter(Boolean).length;
+  const dc=D.filter(Boolean).length,tc=T.filter(Boolean).length,c=cost(dc,tc);
+  const summary=M.map((m,i)=>{
+    const s=sel[i]?`Sélection : ${sel[i]}${D[i]?' [Doublé]':T[i]?' [Triplé]':''}`:'Non sélectionné';
+    return `M${m.id} — ${m.home} vs ${m.away} (${m.comp})
+  Probas FDJ : 1=${m.p1}% N=${m.pN}% 2=${m.p2}% | ${s}
+  Forme dom : ${m.hForm.join('-')} | Forme ext : ${m.aForm.join('-')}
+  Classement : ${m.hRank} vs ${m.aRank}
+  Absents dom : ${m.hAbs} | Absents ext : ${m.aAbs}
+  Enjeu : ${m.enjeu} | H2H : ${m.h2h}`;
+  }).join('\n\n');
 
-  const fillFav = () => {
-    setSel(MATCHES.map(m => { const mx = Math.max(m.p1,m.pN,m.p2); return mx===m.p1?"1":mx===m.pN?"N":"2"; }));
-  };
+  const modeMsg=filled===0
+    ?'Le joueur n\'a rien sélectionné. Donne tes recommandations 1/N/2 pour les 15 matchs basées sur les données réelles, puis propose la meilleure stratégie D/T.'
+    :`Le joueur a sélectionné ${filled}/15. Analyse ses choix et complète les matchs restants.`;
 
-  const autoSuggest = () => {
-    let nd = [...D], nt = [...T];
-    let dc = nd.filter(Boolean).length, tc = nt.filter(Boolean).length;
-    MATCHES.filter(m=>m.piege).sort((a,b)=>Math.max(a.p1,a.pN,a.p2)-Math.max(b.p1,b.pN,b.p2)).forEach(m=>{
-      const i=m.id-1;
-      if(!nt[i]&&!nd[i]&&isAllowed(dc,tc+1)){nt[i]=true;tc++;}
-    });
-    MATCHES.map((m,i)=>{const s=[m.p1,m.pN,m.p2].sort((a,b)=>b-a);return{i,gap:s[0]-s[1]};})
-      .filter(x=>!nd[x.i]&&!nt[x.i]&&x.gap<18).sort((a,b)=>a.gap-b.gap)
-      .forEach(({i})=>{if(isAllowed(dc+1,tc)){nd[i]=true;dc++;}});
-    setD(nd); setT(nt);
-  };
-
-  const getAI = async () => {
-    setAiLoading(true); setAiText(null);
-    const matchSummary = MATCHES.map((m,i) => {
-      const s = sel[i] ? `Sélection : ${sel[i]}${D[i]?" [Doublé]":T[i]?" [Triplé]":""}` : "Pas encore sélectionné";
-      return `M${m.id} — ${m.home} vs ${m.away} (${m.comp})
-  Probas FDJ : 1=${m.p1}% N=${m.pN}% 2=${m.p2}%
-  ${s}
-  Forme dom : ${m.homeForm.join("-")} | Forme ext : ${m.awayForm.join("-")}
-  Classement : ${m.homeRank} vs ${m.awayRank}
-  Absents dom : ${m.homeAbs}
-  Absents ext : ${m.awayAbs}
-  Enjeu : ${m.enjeu}
-  H2H : ${m.h2h}`;
-    }).join("\n\n");
-
-    const modeMsg = filled === 0
-      ? "Le joueur n'a encore rien sélectionné. Donne tes recommandations 1/N/2 pour les 15 matchs en te basant sur les données réelles, puis propose une stratégie D/T optimale."
-      : `Le joueur a sélectionné ${filled}/15 matchs. Analyse ses choix et complète les matchs non sélectionnés.`;
-
-    const prompt = `Tu es expert Loto Foot 15 FDJ. Règles officielles :
+  const prompt=`Tu es expert Loto Foot 15 FDJ. Règles :
 - Grille N°32 du 25/04/2026, Super Pactole 3 000 000 €, clôture 20h55
 - Base 1€. Coût = 2^D × 3^T. Max 768€. Prolongations non comptées. Gain min 11/15.
 
 ${modeMsg}
 
-Données des 15 matchs :
-${matchSummary}
+${summary}
 
-Bilan actuel : ${dCount}D + ${tCount}T → ${cost}€
+Bilan actuel : ${dc}D + ${tc}T → ${c}€
 
-Réponds sans introduction. Format :
-1. Recommandations match par match (une ligne chacun) : M1→1 car…, M2→2 car…, etc.
-2. Les 3 pièges majeurs à sécuriser en D ou T avec justification courte
-3. Stratégie D/T proposée (respecter le tableau FDJ)
-4. Budget conseillé et note /10`;
+Réponds sans introduction :
+RECOMMANDATIONS PAR MATCH :
+M1 → [1/N/2] — raison courte basée sur données réelles
+(15 lignes au total)
 
-    try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:1500, messages:[{role:"user",content:prompt}] })
-      });
-      const data = await res.json();
-      setAiText(data.content?.map(c=>c.text||"").join("")||"Erreur de réponse.");
-    } catch(e) {
-      setAiText("Erreur de connexion.");
-    }
-    setAiLoading(false);
-  };
+3 PIÈGES MAJEURS À SÉCURISER :
 
-  const qualityScore = () => {
-    const f = sel.filter(Boolean).length;
-    if (!f) return 0;
-    let t = 0;
-    sel.forEach((s,i)=>{ if(!s)return; const m=MATCHES[i]; t+=s==="1"?m.p1:s==="N"?m.pN:m.p2; });
-    return Math.round(t/f);
-  };
+STRATÉGIE D/T CONSEILLÉE :
 
-  const pct = Math.min(100, Math.round(cost/768*100));
+BUDGET & NOTE /10 :`;
 
-  const s = {
-    wrap:{ maxWidth:1100, margin:"0 auto", padding:"12px 14px", fontFamily:"'Outfit',system-ui,sans-serif", color:G.text, background:G.bg, minHeight:"100vh" },
-    card:{ background:G.surface, border:`1px solid ${G.border}`, borderRadius:12, overflow:"hidden", marginBottom:12 },
-    cardH:{ padding:"10px 14px", borderBottom:`1px solid ${G.border}`, background:G.surface2, display:"flex", alignItems:"center", gap:8, fontSize:"0.78rem", fontWeight:700, textTransform:"uppercase", letterSpacing:1 },
-    cardB:{ padding:14 },
-    btn:(color,bg)=>({ border:"none", borderRadius:8, cursor:"pointer", fontFamily:"'Outfit',sans-serif", fontWeight:700, padding:"9px 14px", fontSize:"0.8rem", background:bg, color }),
-  };
-
-  return (
-    <div style={s.wrap}>
-      {/* HEADER */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8,paddingBottom:14,borderBottom:`1px solid ${G.border}`,marginBottom:16}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <div style={{width:42,height:42,borderRadius:10,background:`linear-gradient(135deg,${G.green},#00c853)`,display:"grid",placeItems:"center",fontSize:20,boxShadow:`0 0 16px rgba(0,230,118,0.3)`}}>⚽</div>
-          <div>
-            <div style={{fontWeight:800,fontSize:"1.3rem",letterSpacing:1}}>Loto Foot 15 — N°32</div>
-            <div style={{fontSize:"0.65rem",color:G.muted,letterSpacing:2,textTransform:"uppercase"}}>Données réelles · Règles FDJ exactes</div>
-          </div>
-        </div>
-        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-          <span style={{padding:"4px 10px",borderRadius:20,fontSize:"0.65rem",fontWeight:700,background:"rgba(255,214,0,0.1)",border:`1px solid rgba(255,214,0,0.3)`,color:G.gold}}>🏆 Super Pactole 3 000 000 €</span>
-          <span style={{padding:"4px 10px",borderRadius:20,fontSize:"0.65rem",fontWeight:700,background:"rgba(0,230,118,0.1)",border:`1px solid rgba(0,230,118,0.3)`,color:G.green}}>⏰ Clôture 20h55</span>
-        </div>
-      </div>
-
-      {/* RÈGLES */}
-      <div style={{padding:"8px 12px",borderRadius:8,background:"rgba(64,196,255,0.07)",border:`1px solid rgba(64,196,255,0.2)`,color:G.blue,fontSize:"0.72rem",marginBottom:12,lineHeight:1.6}}>
-        📋 <strong>Règles FDJ LF15 :</strong> Base 1€ · <strong>D = Doublé</strong> (2 résultats cochés → ×2) · <strong>T = Triplé</strong> (3 résultats cochés → ×3) · Coût = 2<sup>D</sup>×3<sup>T</sup> · Max 768€ · Prolongations non comptées · Gain min 11/15
-      </div>
-
-      <div style={{display:"grid",gridTemplateColumns:"1fr 310px",gap:12}}>
-        {/* COLONNE GAUCHE */}
-        <div>
-          {/* BARRE D'ACTIONS */}
-          <div style={{display:"flex",gap:7,marginBottom:10,flexWrap:"wrap"}}>
-            <button style={s.btn("#000",G.green)} onClick={fillFav}>⭐ Favoris</button>
-            <button style={s.btn(G.text,"transparent")} onClick={autoSuggest}>⚡ Auto D/T</button>
-            <button style={s.btn(G.muted,"transparent")} onClick={reset}>↺ Reset</button>
-            <button style={{...s.btn("#000",G.gold),flex:1,minWidth:180}} onClick={getAI} disabled={aiLoading}>
-              {aiLoading ? "⏳ Claude analyse..." : "🤖 Analyse Claude (données réelles)"}
-            </button>
-          </div>
-
-          {/* MATCHS */}
-          {MATCHES.map((m, i) => {
-            const dc = D.filter(Boolean).length, tc = T.filter(Boolean).length;
-            const canD = D[i] || isAllowed(dc+1, T[i]?tc-1:tc);
-            const canT = T[i] || isAllowed(D[i]?dc-1:dc, tc+1);
-            return (
-              <div key={i} style={{...s.card, borderColor: m.piege ? "rgba(255,214,0,0.3)" : G.border}}>
-                {/* LIGNE PRINCIPALE */}
-                <div style={{display:"grid",gridTemplateColumns:"22px 1fr auto",gap:8,alignItems:"start",padding:"9px 12px",background:G.surface2}}>
-                  <div style={{textAlign:"center",paddingTop:2}}>
-                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:"0.68rem",color:G.muted,fontWeight:700}}>{m.id}</div>
-                    {m.piege && <div style={{fontSize:"0.48rem",background:"rgba(255,214,0,0.15)",border:`1px solid rgba(255,214,0,0.4)`,color:G.gold,borderRadius:3,padding:"1px 3px",marginTop:2,whiteSpace:"nowrap"}}>⚡PIÈ GE</div>}
-                  </div>
-                  <div>
-                    <div style={{fontSize:"0.58rem",color:G.muted,textTransform:"uppercase",letterSpacing:0.5}}>{m.comp}</div>
-                    <div style={{fontWeight:700,fontSize:"0.85rem"}}>{m.home} <span style={{color:G.muted,fontWeight:400,fontSize:"0.75rem"}}>vs</span> {m.away}</div>
-                    <ProbaBar p1={m.p1} pN={m.pN} p2={m.p2}/>
-                    <div style={{display:"flex",gap:4,fontSize:"0.57rem",color:G.muted,fontFamily:"monospace"}}>
-                      <span>1:{m.p1}%</span><span>N:{m.pN}%</span><span>2:{m.p2}%</span>
-                    </div>
-                    <button onClick={()=>toggleExpand(i)} style={{background:"none",border:"none",cursor:"pointer",fontSize:"0.6rem",color:G.muted,padding:0,marginTop:3}}>
-                      {expanded[i]?"▲ Masquer données":"▼ Voir données réelles (forme, blessés, enjeu)"}
-                    </button>
-                  </div>
-                  {/* BOUTONS 1/N/2 + D/T */}
-                  <div style={{minWidth:115}}>
-                    <div style={{display:"flex",gap:3,marginBottom:3}}>
-                      {["1","N","2"].map(v=>{
-                        const active=sel[i]===v;
-                        const bc=v==="1"?G.green:v==="N"?G.draw:G.red;
-                        return <button key={v} onClick={()=>pick(i,v)} style={{flex:1,padding:"5px 2px",border:`1px solid ${active?bc:G.border}`,borderRadius:6,cursor:"pointer",fontFamily:"monospace",fontSize:"0.7rem",fontWeight:700,background:active?`${bc}22`:"transparent",color:active?bc:G.muted,transition:"all 0.1s"}}>{v}</button>;
-                      })}
-                    </div>
-                    <div style={{display:"flex",gap:3}}>
-                      <button onClick={()=>toggleD(i)} disabled={!canD&&!D[i]} style={{flex:1,padding:"2px 3px",border:`1px solid ${D[i]?G.blue:G.border}`,borderRadius:5,cursor:(!canD&&!D[i])?"not-allowed":"pointer",fontSize:"0.57rem",fontWeight:700,background:D[i]?"rgba(64,196,255,0.15)":"transparent",color:D[i]?G.blue:G.muted,opacity:(!canD&&!D[i])?0.2:1}} title="Doublé : cocher 2 résultats · ×2 le coût">D{D[i]?" ✓":""}</button>
-                      <button onClick={()=>toggleT(i)} disabled={!canT&&!T[i]} style={{flex:1,padding:"2px 3px",border:`1px solid ${T[i]?G.gold:G.border}`,borderRadius:5,cursor:(!canT&&!T[i])?"not-allowed":"pointer",fontSize:"0.57rem",fontWeight:700,background:T[i]?"rgba(255,214,0,0.15)":"transparent",color:T[i]?G.gold:G.muted,opacity:(!canT&&!T[i])?0.2:1}} title="Triplé : cocher les 3 résultats · ×3 le coût">T{T[i]?" ✓":""}</button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* DONNÉES RÉELLES — expandable */}
-                {expanded[i] && (
-                  <div style={{padding:"10px 12px",borderTop:`1px solid ${G.border}`}}>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-                      {[{label:`🏠 ${m.home}`,rank:m.homeRank,form:m.homeForm,abs:m.homeAbs},{label:`✈️ ${m.away}`,rank:m.awayRank,form:m.awayForm,abs:m.awayAbs}].map((t,ti)=>(
-                        <div key={ti} style={{background:G.bg,border:`1px solid ${G.border}`,borderRadius:7,padding:8}}>
-                          <div style={{fontSize:"0.6rem",textTransform:"uppercase",letterSpacing:1,color:G.muted,fontWeight:700,marginBottom:5}}>{t.label}</div>
-                          <div style={{fontSize:"0.67rem",color:G.muted,marginBottom:3}}>Classement : <span style={{color:G.text}}>{t.rank}</span></div>
-                          <div style={{fontSize:"0.67rem",color:G.muted,marginBottom:3}}>Forme : {t.form.map((r,j)=><FormDot key={j} r={r}/>)}</div>
-                          <div style={{fontSize:"0.63rem",color:G.red,lineHeight:1.4}}>Absents : {t.abs}</div>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{background:G.bg,border:`1px solid ${G.border}`,borderRadius:7,padding:8,marginBottom:6}}>
-                      <div style={{fontSize:"0.6rem",textTransform:"uppercase",letterSpacing:1,color:G.muted,fontWeight:700,marginBottom:4}}>📋 Enjeu & contexte</div>
-                      <div style={{fontSize:"0.67rem",color:G.muted,lineHeight:1.5}}>{m.enjeu}</div>
-                    </div>
-                    <div style={{background:G.bg,border:`1px solid ${G.border}`,borderRadius:7,padding:8,marginBottom:6}}>
-                      <div style={{fontSize:"0.6rem",textTransform:"uppercase",letterSpacing:1,color:G.muted,fontWeight:700,marginBottom:4}}>🔁 H2H</div>
-                      <div style={{fontSize:"0.67rem",color:G.muted}}>{m.h2h}</div>
-                    </div>
-                    <div style={{background:"rgba(0,0,0,0.25)",borderRadius:7,padding:"8px 10px",fontSize:"0.68rem",color:G.muted,lineHeight:1.6}}>
-                      <strong style={{color:G.text}}>Verdict : </strong>{m.verdict}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          {/* PANEL IA */}
-          <div style={s.card}>
-            <div style={s.cardH}>🤖 Analyse Claude IA</div>
-            <div style={s.cardB}>
-              {aiLoading && (
-                <div style={{display:"flex",alignItems:"center",gap:6,color:G.muted,fontSize:"0.78rem"}}>
-                  <span>⏳ Claude analyse les 15 matchs avec les données réelles...</span>
-                </div>
-              )}
-              {!aiLoading && !aiText && (
-                <div style={{color:G.muted,fontSize:"0.78rem",lineHeight:1.7}}>
-                  Clique sur <strong style={{color:G.text}}>🤖 Analyse Claude</strong> en haut — pas besoin de sélectionner quoi que ce soit au préalable. Claude analysera les 15 matchs avec toutes les données réelles (forme, blessés, classement, enjeu, H2H) et te donnera ses recommandations complètes match par match.
-                </div>
-              )}
-              {!aiLoading && aiText && (
-                <div style={{fontSize:"0.78rem",lineHeight:1.8,color:G.text,whiteSpace:"pre-wrap"}}>{aiText}</div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* COLONNE DROITE */}
-        <div style={{display:"flex",flexDirection:"column",gap:12}}>
-
-          {/* SCORE */}
-          <div style={s.card}>
-            <div style={s.cardH}>🎯 État de la grille</div>
-            <div style={{...s.cardB,textAlign:"center"}}>
-              <div style={{fontWeight:900,fontSize:"2.8rem",color:G.green,lineHeight:1,textShadow:`0 0 24px rgba(0,230,118,0.4)`}}>{filled}/15</div>
-              <div style={{fontSize:"0.67rem",color:G.muted,textTransform:"uppercase",letterSpacing:2,marginBottom:10}}>Matchs pronostiqués</div>
-              <div style={{fontSize:"0.8rem",color:G.muted}}>Score qualité FDJ : <strong style={{color:G.gold}}>{qualityScore()}%</strong></div>
-            </div>
-          </div>
-
-          {/* COÛT */}
-          <div style={s.card}>
-            <div style={s.cardH}>💶 Coût — FDJ officiel</div>
-            <div style={s.cardB}>
-              <div style={{background:G.surface2,border:`1px solid ${G.border}`,borderRadius:8,padding:10,marginBottom:10}}>
-                {[["Base",null,"1 €"],[`Doublés (${dCount})`,null,dCount?`× ${Math.pow(2,dCount)}`:"× 1"],[`Triplés (${tCount})`,null,tCount?`× ${Math.pow(3,tCount)}`:"× 1"]].map(([l,,v],i)=>(
-                  <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",fontSize:"0.76rem"}}>
-                    <span style={{color:G.muted}}>{l}</span>
-                    <span style={{fontFamily:"monospace",fontWeight:600}}>{v}</span>
-                  </div>
-                ))}
-                <div style={{borderTop:`1px solid ${G.border}`,marginTop:6,paddingTop:6,display:"flex",justifyContent:"space-between",fontWeight:800}}>
-                  <span style={{color:G.muted}}>TOTAL</span>
-                  <span style={{color:G.gold,fontSize:"1rem",fontFamily:"monospace"}}>{cost} €</span>
-                </div>
-              </div>
-              <div style={{fontSize:"0.67rem",color:G.muted,marginBottom:4,display:"flex",justifyContent:"space-between"}}>
-                <span>Plafond FDJ (768€ max)</span><span>{pct}%</span>
-              </div>
-              <div style={{height:5,background:G.border,borderRadius:3,overflow:"hidden",marginBottom:4}}>
-                <div style={{height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,${G.green},${pct>75?G.red:G.gold})`,borderRadius:3,transition:"width 0.4s"}}/>
-              </div>
-              <div style={{fontSize:"0.65rem",color:G.muted}}>Combinaisons : <strong style={{color:G.blue}}>{cost.toLocaleString("fr")}</strong> · D: {dCount} · T: {tCount}</div>
-              {cost >= 768 && <div style={{marginTop:8,padding:"6px 10px",borderRadius:7,background:"rgba(255,61,0,0.08)",border:`1px solid rgba(255,61,0,0.25)`,color:G.red,fontSize:"0.7rem"}}>🔴 Plafond 768€ atteint</div>}
-            </div>
-          </div>
-
-          {/* TABLEAU MISES FDJ */}
-          <div style={s.card}>
-            <div style={{...s.cardH,justifyContent:"space-between"}}>
-              <span>📊 Tableau mises FDJ</span>
-              <button onClick={()=>setShowMise(!showMise)} style={{background:"none",border:"none",cursor:"pointer",color:G.muted,fontSize:"0.7rem"}}>{showMise?"▲ Masquer":"▼ Voir"}</button>
-            </div>
-            {showMise && (
-              <div style={{...s.cardB,overflowX:"auto"}}>
-                <div style={{fontSize:"0.65rem",color:G.muted,marginBottom:6}}>Lignes=Doublés · Colonnes=Triplés · <span style={{color:G.gold}}>■ ta position</span> · — interdit</div>
-                <table style={{borderCollapse:"collapse",fontSize:"0.6rem",width:"100%"}}>
-                  <thead><tr><th style={{background:G.surface2,border:`1px solid ${G.border}`,padding:"3px 5px",color:G.muted}}>D\T</th>
-                    {[0,1,2,3,4,5,6].map(t=><th key={t} style={{background:G.surface2,border:`1px solid ${G.border}`,padding:"3px 5px",color:G.muted}}>{t}T</th>)}
-                  </tr></thead>
-                  <tbody>{MISE_TABLE.map((row,d)=>(
-                    <tr key={d}><th style={{background:G.surface2,border:`1px solid ${G.border}`,padding:"3px 5px",color:G.muted,fontFamily:"monospace"}}>{d}D</th>
-                      {row.map((v,t)=>{
-                        const isCur=d===dCount&&t===tCount;
-                        return <td key={t} style={{border:`1px solid ${isCur?G.gold:G.border}`,padding:"3px 5px",textAlign:"center",fontFamily:"monospace",background:v===null?"rgba(0,0,0,0.25)":isCur?"rgba(255,214,0,0.2)":d===dCount||t===tCount?"rgba(255,214,0,0.05)":"transparent",color:v===null?G.border:isCur?G.gold:G.text,fontWeight:isCur?700:400}}>{v===null?"—":`${v}€`}</td>;
-                      })}
-                    </tr>
-                  ))}</tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* ÉCHELONS */}
-          <div style={s.card}>
-            <div style={s.cardH}>💰 Échelons de gains</div>
-            <div style={s.cardB}>
-              {[["Rang 1","15/15 ou 14/14","3 000 000 € 🏆",G.gold],["Rang 2","13/15","Mutuel partagé",G.muted],["Rang 3","12/15","Mutuel partagé",G.muted],["Rang 4","11/15","Mutuel partagé",G.muted]].map(([r,b,g,c])=>(
-                <div key={r} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:`1px solid ${G.border}`,fontSize:"0.74rem"}}>
-                  <span style={{color:G.muted}}>{r}</span><span style={{color:G.muted}}>{b}</span><span style={{fontFamily:"monospace",color:c,fontWeight:700}}>{g}</span>
-                </div>
-              ))}
-              <p style={{fontSize:"0.65rem",color:G.muted,marginTop:8,lineHeight:1.5}}>Prolongations jamais comptées. Gains rangs 2-4 partagés entre tous les gagnants.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div style={{fontSize:"0.62rem",color:G.muted,textAlign:"center",padding:"12px 0",borderTop:`1px solid ${G.border}`,marginTop:14,opacity:0.5,lineHeight:1.6}}>
-        Sources : Parions Sport FDJ (probas) · Foot Mercato / Top Mercato / L'Équipe (blessés/forme — 24-25 avr 2026) · Règles LF15 N°32 · Jeu de hasard — Jouez responsable · 09 74 75 13 13
-      </div>
-    </div>
-  );
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await r.json();
+    const txt=data.content?.map(c=>c.text||'').join('')||'Erreur de réponse.';
+    cont.innerHTML=`<div class="ai-result-text">${txt}</div>`;
+  }catch(e){
+    cont.innerHTML='<div style="color:#ff3d00;font-size:0.78rem">Erreur de connexion. Vérifie ta connexion internet et réessaie.</div>';
+  }
+  btn.disabled=false;btn.textContent='🤖 Lancer l\'analyse Claude';
 }
+
+buildMiseTable();
+renderMatches();
+updateStats();
+</script>
+
+</body>
+</html>
